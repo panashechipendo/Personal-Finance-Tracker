@@ -222,6 +222,10 @@ def calculate_budget_remaining():
                     "current_spent": row["current_spent"]
                 }
             )
+
+    if len(budget) == 0:
+        print("Budget is empty")
+        return
     rem_budget = []
     for item in budget:
         remaining = int(item["monthly_budget"]) - int(item["current_spent"])
@@ -236,7 +240,19 @@ def calculate_budget_remaining():
     return rem_budget
 
 def check_budget_alerts():
-    ...
+    budget_remain = calculate_budget_remaining()
+    if budget_remain:
+        for remain in budget_remain:
+            total = remain["monthly_budget"]
+            if int(remain["remaining"]) <= 0:
+                print(f"Alert!: {remain["category"]}'s budget has been reached/exceeded: ${remain["remaining"]}")
+                return True
+            elif int(remain["remaining"]) <= (0.1 * total) and int(remain["remaining"]) > 0:
+                print(f"WARNING: {remain["category"]}'s budget is about to be reached: ${remain["remaining"]}")
+                return False
+            else: 
+                return False
+
 
 
 if __name__ == "__main__":
