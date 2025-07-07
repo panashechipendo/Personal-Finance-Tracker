@@ -1,6 +1,8 @@
+from tabulate import tabulate
 import csv
 import sys
 import datetime
+
 
 options = ["Add Transaction", "View Balance", "Set Budget", "View Budget Status", "Generate Report", "Export Data", "Exit"]
 
@@ -47,7 +49,10 @@ def main():
 
 def add_transaction():
     data = load_data()
-    balance = data[-1]["balance"]
+    if len(data) > 0:
+        balance = data[-1]["balance"]
+    else: 
+        balance = 0
 
     while True:
         try:
@@ -64,11 +69,13 @@ def add_transaction():
                 balance = int(balance) + int(amount)
             elif transaction == "expense" and int(balance) > 0:
                 balance = int(balance) - int(amount)
+            else:
+                balance = balance
           
             savedata(today.today(), transaction, category, description, amount, balance)
             print("✔️ Transaction added successfully!")
             print()
-            print(view_balance())
+            view_balance()
             break
         except KeyboardInterrupt:
             print("Thank you for using Finance Tracker!")
@@ -78,16 +85,28 @@ def add_transaction():
             
 
 def view_balance():
-    ...
+    data = load_data()
+    if len(data) > 0:
+        balance = data[-1]["balance"]
+    else: 
+        balance = 0
+
+    print(f"Current balance: {balance}")
 
 def view_budget_status():
     ...
 
 def generate_report():
-    ...
+    data = load_data()
+    if len(data) > 0:
+        print(tabulate(data, headers="keys", tablefmt="grid"))
+    else:
+        print("No Transaction History")
 
 def export_data():
-    ...
+    formatt  = input("Please select a format(.txt, .csv, )")
+
+    name = input("Name of output file?: ")
 
 def load_data():
         data = []
