@@ -23,21 +23,21 @@ def main():
                 print("Please enter a number between 1 and 7")
                 continue
                 
-            if user_input == "1":
+            if choice == 1:
                 add_transaction()
-            elif user_input == "2":
+            elif choice == 2:
                 view_balance()
-            elif user_input == "3":
+            elif choice == 3:
                 set_budget()
-            elif user_input == "4": 
+            elif choice == 4: 
                 view_budget_status()
-            elif user_input == "5":
+            elif choice == 5:
                 generate_report()
-            elif user_input == "6":
+            elif choice == 6:
                 export_data()
-            elif user_input == "7":
-                    print("Thank you for using Finance Tracker!")
-                    sys.exit(0)
+            elif choice == 7:
+                print("Thank you for using Finance Tracker!")
+                sys.exit(0)
         except ValueError:
             print("Not a valid input")
         except KeyboardInterrupt:
@@ -122,7 +122,25 @@ def savedata(date, type, category, description, amount, balance):
         )
 
 def set_budget():
-    ...
+    while True:
+        try:
+            category = input("Enter budget category: ")
+            monthly = int(input("Enter monthly budget: "))
+            current = int(input("Enter budget spent: "))
+            with open("budget.csv", "a") as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget", "current_spent"])
+                writer.writerow(
+                    {
+                        "category": category,
+                        "monthly_budget": monthly,
+                        "current_spent": current
+                    }
+                )
+        except ValueError:
+            print("invalid input")
+            continue
+        except KeyboardInterrupt:
+            print("Thank you for using finance tracker!")
 
 def calculate_budget_remaining():
     ...
