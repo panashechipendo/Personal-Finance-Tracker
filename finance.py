@@ -70,6 +70,7 @@ def add_transaction():
                 balance = int(balance) + int(amount)
             elif transaction == "expense" and int(balance) > 0:
                 balance = int(balance) - int(amount)
+                check_budget_alerts()
             else:
                 balance = balance
           
@@ -95,18 +96,12 @@ def view_balance():
     print(f"Current balance: {balance}")
 
 def view_budget_status():
-    budget = []
-    with open("budget.csv", "r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            budget.append(
-                {
-                    "category": row["category"],
-                    "monthly_budget": row["monthly_budget"],
-                    "current_spent": row["current_spent"]
-                }
-            )
-        print(tabulate(budget, headers="keys", tablefmt="grid"))
+    budget = load_budget_data()
+    if len(budget) == 0:
+        print("Cant display budget that's not defined")
+        return
+    
+    print(tabulate(budget, headers="keys", tablefmt="grid"))
 
 def generate_report():
     data = load_data()
@@ -146,7 +141,7 @@ def export_data():
         wb.save("output.xlsx")
         print("File Exported!: output.xlsx")
     elif formatted == ".csv":
-        with open("output.csv", "q") as file:
+        with open("output.csv", "w") as file:
             writer = csv.DictWriter(file, fieldnames=["date", "type", "category", "description", "amount", "balance"])
             writer.writeheader()
             for entry in data:
@@ -174,6 +169,16 @@ def load_data():
                 )
         return data
 
+def load_budget_data():
+    budgets = []
+    with open("budget.csv", "r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            budgets.append({
+                "category": row["category"],
+                "monthly_budget": int(row["monthly_budget"])
+            })
+    return budgets
 
 def savedata(date, type, category, description, amount, balance):
     with open("transactions.csv", "a") as file:
@@ -194,14 +199,12 @@ def set_budget():
         try:
             category = input("Enter budget category: ")
             monthly = int(input("Enter monthly budget: "))
-            current = int(input("Enter budget spent: "))
             with open("budget.csv", "a") as file:
-                writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget", "current_spent"])
+                writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget"])
                 writer.writerow(
                     {
                         "category": category,
                         "monthly_budget": monthly,
-                        "current_spent": current
                     }
                 )
         except ValueError:
@@ -211,33 +214,29 @@ def set_budget():
             print("Thank you for using finance tracker!")
 
 def calculate_budget_remaining():
-    budget = []
-    with open("budget.csv", "r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            budget.append(
-                {
-                    "category": row["category"],
-                    "monthly_budget": row["monthly_budget"],
-                    "current_spent": row["current_spent"]
-                }
-            )
+    budgets = load_budget_data()
+    transactions = load_data()
 
-    if len(budget) == 0:
-        print("Budget is empty")
-        return
-    rem_budget = []
-    for item in budget:
-        remaining = int(item["monthly_budget"]) - int(item["current_spent"])
-        rem_budget.append(
-            {
-                "category": item["category"],
-                "monthly_budget": item["monthly_budget"],
-                "current_spent": item["current_spent"],
-                "remaining": remaining,
-            }
-        )
-    return rem_budget
+    results = []
+
+    for budget in budgets:
+        category = budget["category"]
+        monthly_limit = budget["monthly_budget"]
+
+        category_expenses = [t for t in transactions if t["type"] == "expense" and t["category"] == category]
+
+        total_spent = sum(int(expense["amount"]) for expense in category_expenses)
+
+        remaining = monthly_limit - total_spent
+
+        results.append({
+            "category": category,
+            "monthly_budget": monthly_limit,
+            "current_spent": total_spent,
+            "remaining": remaining
+        })
+
+    return results
 
 def check_budget_alerts():
     budget_remain = calculate_budget_remaining()
@@ -249,7 +248,7 @@ def check_budget_alerts():
                 return True
             elif int(remain["remaining"]) <= (0.1 * total) and int(remain["remaining"]) > 0:
                 print(f"WARNING: {remain["category"]}'s budget is about to be reached: ${remain["remaining"]}")
-                return False
+                return True
             else: 
                 return False
 
