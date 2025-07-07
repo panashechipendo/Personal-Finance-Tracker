@@ -14,6 +14,7 @@ def display_menu():
 
 def main():
     while True:
+        display_menu()
         try:
             user_input = input("Choose a number from the options: ")
             choice = int(user_input)
@@ -45,7 +46,36 @@ def main():
 
 
 def add_transaction():
-    ...
+    data = load_data()
+    balance = data[-1]["balance"]
+
+    while True:
+        try:
+            today = datetime.date
+            transaction = input("Enter transaction type (income/expense): ")
+            if transaction == "income" or transaction == "expense":
+                category = input("Enter category: ")  
+            else:
+                 continue
+            description = input("Enter description: ")
+            amount = input("Enter amount: ")
+
+            if transaction == "income":
+                balance = int(balance) + int(amount)
+            elif transaction == "expense" and int(balance) > 0:
+                balance = int(balance) - int(amount)
+          
+            savedata(today.today(), transaction, category, description, amount, balance)
+            print("✔️ Transaction added successfully!")
+            print()
+            print(view_balance())
+            break
+        except KeyboardInterrupt:
+            print("Thank you for using Finance Tracker!")
+        except ValueError:
+            print("Thats an invalid input")
+            continue
+            
 
 def view_balance():
     ...
@@ -77,8 +107,19 @@ def load_data():
                 )
         return data
 
-def savedata():
-    ...
+def savedata(date, type, category, description, amount, balance):
+    with open("transactions.csv", "a") as file:
+        writer = csv.DictWriter(file, fieldnames=["date", "type", "category", "description", "amount", "balance"])
+        writer.writerow(
+            {
+                "date": date,
+                "type": type,
+                "category": category,
+                "description": description,
+                "amount": amount,
+                "balance": balance
+            }
+        )
 
 def set_budget():
     ...
