@@ -1,4 +1,5 @@
 from tabulate import tabulate
+from openpyxl import Workbook
 import csv
 import sys
 import datetime
@@ -94,7 +95,18 @@ def view_balance():
     print(f"Current balance: {balance}")
 
 def view_budget_status():
-    ...
+    budget = []
+    with open("budget.csv", "r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            budget.append(
+                {
+                    "category": row["category"],
+                    "monthly_budget": row["monthly_budget"],
+                    "current_spent": row["current_spent"]
+                }
+            )
+        print(tabulate(budget, headers="keys", tablefmt="grid"))
 
 def generate_report():
     data = load_data()
@@ -104,9 +116,45 @@ def generate_report():
         print("No Transaction History")
 
 def export_data():
-    formatt  = input("Please select a format(.txt, .csv, )")
+    data = load_data()
+    if len(data) == 0:
+        print("Can't export an empty file!")
+        return
+    formatted  = input("Please select a format(.xlsx(excel), .csv(comma separated value))")
+    if formatted == ".xlsx" or formatted == "excel":
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Transactions"
+        ws["A1"] = "Date"
+        ws["B1"] = "Type"
+        ws["C1"] = "Category"
+        ws["D1"] = "Description"
+        ws["E1"] = "Amount"
+        ws["F1"] = "Balance"
 
-    name = input("Name of output file?: ")
+        for entry in data:
+            ws.append(
+                [
+                    entry["date"],
+                    entry["type"],
+                    entry["category"],
+                    entry["description"],
+                    entry["amount"],
+                    entry["balance"]
+                ]
+            )
+        wb.save("output.xlsx")
+        print("File Exported!: output.xlsx")
+    elif formatted == ".csv":
+        with open("output.csv", "q") as file:
+            writer = csv.DictWriter(file, fieldnames=["date", "type", "category", "description", "amount", "balance"])
+            writer.writeheader()
+            for entry in data:
+                writer.writerow(entry)
+        print("File exported! output.csv")
+
+
+
 
 def load_data():
         data = []
@@ -125,6 +173,7 @@ def load_data():
                     }
                 )
         return data
+
 
 def savedata(date, type, category, description, amount, balance):
     with open("transactions.csv", "a") as file:
@@ -162,7 +211,17 @@ def set_budget():
             print("Thank you for using finance tracker!")
 
 def calculate_budget_remaining():
-    ...
+    budget = []
+    with open("budget.csv", "r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            budget.append(
+                {
+                    "category": row["category"],
+                    "monthly_budget": row["monthly_budget"],
+                    "current_spent": row["current_spent"]
+                }
+            )
 
 def check_budget_alerts():
     ...
