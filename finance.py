@@ -222,6 +222,18 @@ def calculate_budget_remaining():
                     "current_spent": row["current_spent"]
                 }
             )
+    rem_budget = []
+    for item in budget:
+        remaining = int(item["monthly_budget"]) - int(item["current_spent"])
+        rem_budget.append(
+            {
+                "category": item["category"],
+                "monthly_budget": item["monthly_budget"],
+                "current_spent": item["current_spent"],
+                "remaining": remaining,
+            }
+        )
+    return rem_budget
 
 def check_budget_alerts():
     ...
