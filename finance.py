@@ -3,31 +3,59 @@ import sys
 
 options = ["Add Transaction", "View Balance", "Set Budget", "View Budget Status", "Generate Report", "Export Data", "Exit"]
 
-def main():
+def display_menu():
+    print("\n" + "="*30)
+    print("       Finance Tracker")
+    print("="*30)
     for i in range(len(options)):
         print(f"{i+1}. {options[i]}")
+    print("="*30)
 
-    option = input("Select an Option: ")
+def main():
     while True:
         try:
             user_input = input("Choose a number from the options: ")
-            if options[int(user_input) - 1]:
-                if user_input == "1":
-                    add_transaction()
-                elif user_input == "2":
-                    load_data()
+            choice = int(user_input)
+
+            if choice < 1 or choice > len(options):
+                print("Please enter a number between 1 and 7")
+                continue
+                
+            if user_input == "1":
+                add_transaction()
+            elif user_input == "2":
+                view_balance()
+            elif user_input == "3":
+                set_budget()
+            elif user_input == "4": 
+                view_budget_status()
+            elif user_input == "5":
+                generate_report()
+            elif user_input == "6":
+                export_data()
+            elif user_input == "7":
+                    print("Thank you for using Finance Tracker!")
+                    sys.exit(0)
         except IndexError:
             print("No option at that number")
-            sys.exit(1)
         except ValueError:
             print("Not a valid input")
 
 
 
-    
-    
-
 def add_transaction():
+    ...
+
+def view_balance():
+    ...
+
+def view_budget_status():
+    ...
+
+def generate_report():
+    ...
+
+def export_data():
     ...
 
 def load_data():
