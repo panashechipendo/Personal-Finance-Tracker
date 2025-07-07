@@ -1,5 +1,6 @@
 import csv
 import sys
+import datetime
 
 options = ["Add Transaction", "View Balance", "Set Budget", "View Budget Status", "Generate Report", "Export Data", "Exit"]
 
@@ -36,11 +37,11 @@ def main():
             elif user_input == "7":
                     print("Thank you for using Finance Tracker!")
                     sys.exit(0)
-        except IndexError:
-            print("No option at that number")
         except ValueError:
             print("Not a valid input")
-
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            sys.exit(0)
 
 
 def add_transaction():
@@ -59,7 +60,22 @@ def export_data():
     ...
 
 def load_data():
-    ...
+        data = []
+        with open("transactions.csv", "r") as file:
+            reader = csv.DictReader(file)
+
+            for row in reader:
+                data.append(
+                    {
+                        "date": row["date"],
+                        "type": row["type"],
+                        "category": row["category"],
+                        "description": row["description"],
+                        "amount": row["amount"],
+                        "balance": row["balance"]
+                    }
+                )
+        return data
 
 def savedata():
     ...
