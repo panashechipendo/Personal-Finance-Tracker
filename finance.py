@@ -50,21 +50,27 @@ def main():
 
 def add_transaction():
     data = load_data()
-    if len(data) > 0:
-        balance = data[-1]["balance"]
+    budget_data = load_budget_data()
+    balance = 0
+    if len(budget_data) > 0:
+        for entry in budget_data:
+            balance += int(entry["monthly_budget"])
     else: 
         balance = 0
 
     while True:
         try:
             today = datetime.date
-            transaction = input("Enter transaction type (income/expense): ")
+            transaction = input("Enter transaction types (income/expense): ")
             if transaction == "income" or transaction == "expense":
                 category = input("Enter category: ")  
             else:
                  continue
+            
+
             description = input("Enter description: ")
             amount = input("Enter amount: ")
+            
 
             if transaction == "income":
                 balance = int(balance) + int(amount)
@@ -121,7 +127,7 @@ def export_data():
         ws = wb.active
         ws.title = "Transactions"
         ws["A1"] = "Date"
-        ws["B1"] = "Type"
+        ws["B1"] = "types"
         ws["C1"] = "Category"
         ws["D1"] = "Description"
         ws["E1"] = "Amount"
@@ -131,7 +137,7 @@ def export_data():
             ws.append(
                 [
                     entry["date"],
-                    entry["type"],
+                    entry["types"],
                     entry["category"],
                     entry["description"],
                     entry["amount"],
@@ -142,13 +148,11 @@ def export_data():
         print("File Exported!: output.xlsx")
     elif formatted == ".csv":
         with open("output.csv", "w") as file:
-            writer = csv.DictWriter(file, fieldnames=["date", "type", "category", "description", "amount", "balance"])
+            writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
             writer.writeheader()
             for entry in data:
                 writer.writerow(entry)
         print("File exported! output.csv")
-
-
 
 
 def load_data():
@@ -160,7 +164,7 @@ def load_data():
                 data.append(
                     {
                         "date": row["date"],
-                        "type": row["type"],
+                        "types": row["types"],
                         "category": row["category"],
                         "description": row["description"],
                         "amount": row["amount"],
@@ -171,7 +175,7 @@ def load_data():
 
 def load_budget_data():
     budgets = []
-    with open("budget.csv", "r") as file:
+    with open("budgets.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             budgets.append({
@@ -180,13 +184,13 @@ def load_budget_data():
             })
     return budgets
 
-def savedata(date, type, category, description, amount, balance):
+def savedata(date, types, category, description, amount, balance):
     with open("transactions.csv", "a") as file:
-        writer = csv.DictWriter(file, fieldnames=["date", "type", "category", "description", "amount", "balance"])
+        writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
         writer.writerow(
             {
                 "date": date,
-                "type": type,
+                "types": types,
                 "category": category,
                 "description": description,
                 "amount": amount,
@@ -199,7 +203,7 @@ def set_budget():
         try:
             category = input("Enter budget category: ")
             monthly = int(input("Enter monthly budget: "))
-            with open("budget.csv", "a") as file:
+            with open("budgets.csv", "a") as file:
                 writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget"])
                 writer.writerow(
                     {
@@ -207,6 +211,7 @@ def set_budget():
                         "monthly_budget": monthly,
                     }
                 )
+            break
         except ValueError:
             print("invalid input")
             continue
@@ -223,7 +228,7 @@ def calculate_budget_remaining():
         category = budget["category"]
         monthly_limit = budget["monthly_budget"]
 
-        category_expenses = [t for t in transactions if t["type"] == "expense" and t["category"] == category]
+        category_expenses = [t for t in transactions if t["types"] == "expense" and t["category"] == category]
 
         total_spent = sum(int(expense["amount"]) for expense in category_expenses)
 
