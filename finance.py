@@ -17,6 +17,7 @@ def display_menu():
         print(f"{i+1}. {options[i]}")
     print("="*30)
 
+# Present options
 def main():
     while True:
         display_menu()
@@ -55,6 +56,7 @@ def main():
             sys.exit(0)
 
 
+# record transaction
 def add_transaction():
     data = load_data()
     budget_data = load_budget_data()
@@ -62,12 +64,6 @@ def add_transaction():
         balance = 0
     elif len(data) > 0:
         balance = data[-1]["balance"]
-
-    if len(budget_data) > 0 and balance == 0:
-        for entry in budget_data:
-            balance += int(entry["monthly_budget"])
-    else: 
-        balance = 0
 
     while True:
         try:
@@ -86,8 +82,8 @@ def add_transaction():
             if transaction == "income":
                 balance = int(balance) + int(amount)
             elif transaction == "expense" and int(balance) > 0:
-                balance = int(balance) - int(amount)
                 check_budget_alerts()
+                balance = int(balance) - int(amount)
             else:
                 balance = balance
           
@@ -115,6 +111,7 @@ def view_balance():
     if continue_prompt == any:
         return
 
+# display budget
 def view_budget_status():
     budget = load_budget_data()
     if len(budget) == 0:
@@ -126,6 +123,7 @@ def view_budget_status():
     if continue_prompt == any:
         return
 
+# display transaction history
 def generate_report():
     data = load_data()
     if len(data) > 0:
@@ -136,6 +134,7 @@ def generate_report():
     else:
         print("No Transaction History")
 
+# Export files in one of two formats
 def export_data():
     data = load_data()
     if len(data) == 0:
@@ -178,35 +177,50 @@ def export_data():
         return
 
 
+# generate array of transactions
 def load_data():
         data = []
-        with open("transactions.csv", "r") as file:
-            reader = csv.DictReader(file)
+        try:
+            with open("transactions.csv", "r") as file:
+                reader = csv.DictReader(file)
 
-            for row in reader:
-                data.append(
-                    {
-                        "date": row["date"],
-                        "types": row["types"],
-                        "category": row["category"],
-                        "description": row["description"],
-                        "amount": row["amount"],
-                        "balance": row["balance"]
-                    }
-                )
+                for row in reader:
+                    data.append(
+                        {
+                            "date": row["date"],
+                            "types": row["types"],
+                            "category": row["category"],
+                            "description": row["description"],
+                            "amount": row["amount"],
+                            "balance": row["balance"]
+                        }
+                    )
+        except FileNotFoundError:
+            print("file not found creating file")
+            with open("transactions.csv", "w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
+                writer.writeheader()
         return data
 
+# Same as above but for budget
 def load_budget_data():
     budgets = []
-    with open("budgets.csv", "r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            budgets.append({
-                "category": row["category"],
-                "monthly_budget": int(row["monthly_budget"])
-            })
+    try:
+        with open("budgets.csv", "r") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                budgets.append({
+                    "category": row["category"],
+                    "monthly_budget": int(row["monthly_budget"])
+                })
+    except FileNotFoundError:
+        print("No file in directory creating file now...")
+        with open("budgets.csv", "w", newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget"])
+                writer.writeheader() 
     return budgets
 
+# Save to csv
 def savedata(date, types, category, description, amount, balance):
     with open("transactions.csv", "a") as file:
         writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
@@ -241,6 +255,7 @@ def set_budget():
         except KeyboardInterrupt:
             print("Thank you for using finance tracker!")
 
+# Determine remaining budget
 def calculate_budget_remaining():
     budgets = load_budget_data()
     transactions = load_data()
@@ -266,6 +281,7 @@ def calculate_budget_remaining():
 
     return results
 
+# Alert the user if reaching or reached budget limit
 def check_budget_alerts():
     budget_remain = calculate_budget_remaining()
     if budget_remain:
@@ -273,14 +289,12 @@ def check_budget_alerts():
             total = remain["monthly_budget"]
             if int(remain["remaining"]) <= 0:
                 print(f"Alert!: {remain["category"]}'s budget has been reached/exceeded: ${remain["remaining"]}")
-                return True
             elif int(remain["remaining"]) <= (0.1 * total) and int(remain["remaining"]) > 0:
-                print(f"WARNING: {remain["category"]}'s budget is about to be reached: ${remain["remaining"]}")
-                return True
+                print(f"WARNING: {remain["category"]}'s budget is about to be reached: ${remain["remaining"]}")   
             else: 
-                return False
+                return True
             
-
+# Clear all records
 def reset():
     try:
         confirm = input("Are you sure you want to reset all data? This will delete all transactions and budgets. (y/n): ")
@@ -290,6 +304,10 @@ def reset():
             with open("transactions.csv", "w", newline="") as file:
                 writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
                 writer.writeheader()
+
+            with open("budgets.csv", "w", newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget"])
+                writer.writeheader() 
 
             print("✔️ All data has been reset successfully!")
         else:
