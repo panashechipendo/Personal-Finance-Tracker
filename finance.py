@@ -1,3 +1,4 @@
+# Gab relevant packages
 from tabulate import tabulate
 from openpyxl import Workbook
 import csv
@@ -5,8 +6,9 @@ import sys
 import datetime
 
 
-options = ["Add Transaction", "View Balance", "Set Budget", "View Budget Status", "Generate Report", "Export Data", "Exit"]
+options = ["Add Transaction", "View Balance", "Set Budget", "View Budget Status", "Generate Report", "Export Data", "Reset", "Exit"]
 
+# greeting screen
 def display_menu():
     print("\n" + "="*30)
     print("       Finance Tracker")
@@ -23,7 +25,7 @@ def main():
             choice = int(user_input)
 
             if choice < 1 or choice > len(options):
-                print("Please enter a number between 1 and 7")
+                print("Please enter a number between 1 and 8")
                 continue
                 
             if choice == 1:
@@ -39,6 +41,8 @@ def main():
             elif choice == 6:
                 export_data()
             elif choice == 7:
+                reset()
+            elif choice == 8:
                 print("Thank you for using Finance Tracker!")
                 sys.exit(0)
         except ValueError:
@@ -46,13 +50,20 @@ def main():
         except KeyboardInterrupt:
             print("\nGoodbye!")
             sys.exit(0)
+        except EOFError:
+            print("\nGoodbye!")
+            sys.exit(0)
 
 
 def add_transaction():
     data = load_data()
     budget_data = load_budget_data()
-    balance = 0
-    if len(budget_data) > 0:
+    if len(data) == 0:
+        balance = 0
+    elif len(data) > 0:
+        balance = data[-1]["balance"]
+
+    if len(budget_data) > 0 and balance == 0:
         for entry in budget_data:
             balance += int(entry["monthly_budget"])
     else: 
@@ -70,7 +81,7 @@ def add_transaction():
 
             description = input("Enter description: ")
             amount = input("Enter amount: ")
-            
+
 
             if transaction == "income":
                 balance = int(balance) + int(amount)
@@ -100,6 +111,9 @@ def view_balance():
         balance = 0
 
     print(f"Current balance: {balance}")
+    continue_prompt = input("Press Enter to continue!: ")
+    if continue_prompt == any:
+        return
 
 def view_budget_status():
     budget = load_budget_data()
@@ -108,11 +122,17 @@ def view_budget_status():
         return
     
     print(tabulate(budget, headers="keys", tablefmt="grid"))
+    continue_prompt = input("Press Enter to continue!: ")
+    if continue_prompt == any:
+        return
 
 def generate_report():
     data = load_data()
     if len(data) > 0:
         print(tabulate(data, headers="keys", tablefmt="grid"))
+        continue_prompt = input("Press Enter to continue!: ")
+        if continue_prompt == any:
+            return
     else:
         print("No Transaction History")
 
@@ -153,6 +173,9 @@ def export_data():
             for entry in data:
                 writer.writerow(entry)
         print("File exported! output.csv")
+    continue_prompt = input("Press Enter to continue!: ")
+    if continue_prompt == any:
+        return
 
 
 def load_data():
@@ -256,6 +279,25 @@ def check_budget_alerts():
                 return True
             else: 
                 return False
+            
+
+def reset():
+    try:
+        confirm = input("Are you sure you want to reset all data? This will delete all transactions and budgets. (y/n): ")
+
+        if confirm.lower() == "y" or confirm.lower() == "yes":
+            # Clear transactions file
+            with open("transactions.csv", "w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["date", "types", "category", "description", "amount", "balance"])
+                writer.writeheader()
+
+            print("✔️ All data has been reset successfully!")
+        else:
+            print("Reset cancelled.")
+    except FileNotFoundError:
+        print("No data files found to reset")
+    except Exception as e:
+        print(f"An error occurred while resetting: {e}")
 
 
 
