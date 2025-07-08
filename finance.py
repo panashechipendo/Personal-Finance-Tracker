@@ -68,21 +68,31 @@ def add_transaction():
     while True:
         try:
             today = datetime.date
-            transaction = input("Enter transaction types (income/expense): ")
+            transaction = input("Enter transaction types (income/expense): ").lower()
             if transaction == "income" or transaction == "expense":
-                category = input("Enter category: ")  
+                category = input("Enter category: ").upper()
             else:
                  continue
             
-
+            if category == "":
+                print("Please input a category(food, bills, etc...)")
+        
             description = input("Enter description: ")
+
+            if description == "":
+                print("Please input a description preferably something describing the purchase")
+                continue
+
             amount = input("Enter amount: ")
+            if int(amount) <= 0:
+                print("cant pay zero or a negative number for transaction")
+                continue
 
 
             if transaction == "income":
                 balance = int(balance) + int(amount)
-            elif transaction == "expense" and int(balance) > 0:
-                check_budget_alerts()
+            elif transaction == "expense":
+                check_budget_alerts(category, amount)
                 balance = int(balance) - int(amount)
             else:
                 balance = balance
@@ -108,20 +118,18 @@ def view_balance():
 
     print(f"Current balance: {balance}")
     continue_prompt = input("Press Enter to continue!: ")
-    if continue_prompt == any:
-        return
+    
 
 # display budget
 def view_budget_status():
-    budget = load_budget_data()
-    if len(budget) == 0:
+    budget_remaining = calculate_budget_remaining()
+    if len(budget_remaining) == 0:
         print("Cant display budget that's not defined")
         return
     
-    print(tabulate(budget, headers="keys", tablefmt="grid"))
+    print(tabulate(budget_remaining, headers="keys", tablefmt="grid"))
     continue_prompt = input("Press Enter to continue!: ")
-    if continue_prompt == any:
-        return
+    
 
 # display transaction history
 def generate_report():
@@ -129,8 +137,7 @@ def generate_report():
     if len(data) > 0:
         print(tabulate(data, headers="keys", tablefmt="grid"))
         continue_prompt = input("Press Enter to continue!: ")
-        if continue_prompt == any:
-            return
+        
     else:
         print("No Transaction History")
 
@@ -173,8 +180,7 @@ def export_data():
                 writer.writerow(entry)
         print("File exported! output.csv")
     continue_prompt = input("Press Enter to continue!: ")
-    if continue_prompt == any:
-        return
+    
 
 
 # generate array of transactions
@@ -238,7 +244,7 @@ def savedata(date, types, category, description, amount, balance):
 def set_budget():
     while True:
         try:
-            category = input("Enter budget category: ")
+            category = input("Enter budget category: ").upper()
             monthly = int(input("Enter monthly budget: "))
             with open("budgets.csv", "a") as file:
                 writer = csv.DictWriter(file, fieldnames=["category", "monthly_budget"])
@@ -282,17 +288,22 @@ def calculate_budget_remaining():
     return results
 
 # Alert the user if reaching or reached budget limit
-def check_budget_alerts():
+def check_budget_alerts(current_category, current_amount):
     budget_remain = calculate_budget_remaining()
     if budget_remain:
         for remain in budget_remain:
             total = remain["monthly_budget"]
-            if int(remain["remaining"]) <= 0:
-                print(f"Alert!: {remain["category"]}'s budget has been reached/exceeded: ${remain["remaining"]}")
-            elif int(remain["remaining"]) <= (0.1 * total) and int(remain["remaining"]) > 0:
-                print(f"WARNING: {remain["category"]}'s budget is about to be reached: ${remain["remaining"]}")   
-            else: 
-                return True
+            current_spent = remain["current_spent"]
+
+            if current_category == remain["category"]:
+                current_spent += int(current_amount)
+
+            remaining_after_transaction = total - current_spent
+
+            if remaining_after_transaction <= 0:
+                print(f"Alert!: {remain['category']}'s budget has been reached/exceeded: ${remaining_after_transaction}")
+            elif remaining_after_transaction <= (0.1 * total) and remaining_after_transaction > 0:
+                print(f"WARNING: {remain['category']}'s budget is about to be reached: ${remaining_after_transaction}")
             
 # Clear all records
 def reset():
